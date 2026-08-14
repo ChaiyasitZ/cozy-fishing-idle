@@ -5,6 +5,7 @@ import Link from "next/link";
 import { SPECIES_BY_ID } from "@/game/data";
 import { formatDuration, prestigeInfo } from "@/game/engine";
 import type { GameSettings, Locale } from "@/game/types";
+import { SpeciesIcon } from "@/components/game/FishCard";
 import { Button, Modal, Panel } from "@/components/ui/primitives";
 import { useNow } from "@/lib/hooks";
 import { formatNumber, pick, t } from "@/lib/i18n";
@@ -116,7 +117,15 @@ export function MorePanel({
           {biggestSpecies && biggest && (
             <Stat
               label={locale === "th" ? "ปลาตัวใหญ่สุด" : "Biggest catch"}
-              value={`${biggestSpecies.emoji} ${pick(locale, biggestSpecies.name)} ${biggest.sizeCm}${t(locale, "common.cm")}`}
+              value={
+                <span className="flex items-center justify-end gap-1.5">
+                  <SpeciesIcon speciesId={biggest.speciesId} size={16} />
+                  <span className="truncate">
+                    {pick(locale, biggestSpecies.name)} {biggest.sizeCm}
+                    {t(locale, "common.cm")}
+                  </span>
+                </span>
+              }
             />
           )}
         </dl>
@@ -248,7 +257,7 @@ function Toggle({
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <>
       <dt className="text-ink-soft">{label}</dt>

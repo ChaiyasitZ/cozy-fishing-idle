@@ -20,6 +20,7 @@ import {
   visitPondAction,
 } from "@/app/actions/social";
 import type { SocialSnapshot } from "@/lib/game/types";
+import { SpeciesIcon } from "@/components/game/FishCard";
 import { Button, EmptyState, Panel } from "@/components/ui/primitives";
 import { formatNumber, pick, t } from "@/lib/i18n";
 import { useGame } from "@/store/gameStore";
@@ -180,9 +181,19 @@ export function FriendsPanel({
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
                       <p className="truncate text-[13px] font-bold">{friend.name}</p>
-                      <p className="text-[11px] text-ink-soft">
-                        {t(locale, "hud.level")} {friend.level} · 📖 {friend.dexCount}
-                        {biggest && ` · ${biggest.emoji} ${friend.biggestSize}${t(locale, "common.cm")}`}
+                      <p className="flex items-center gap-1 text-[11px] text-ink-soft">
+                        <span>
+                          {t(locale, "hud.level")} {friend.level} · 📖 {friend.dexCount} ·
+                        </span>
+                        {biggest && friend.biggestSpecies && (
+                          <>
+                            <SpeciesIcon speciesId={friend.biggestSpecies} size={14} />
+                            <span>
+                              {friend.biggestSize}
+                              {t(locale, "common.cm")}
+                            </span>
+                          </>
+                        )}
                       </p>
                     </div>
                     <div className="flex shrink-0 gap-1">
@@ -217,10 +228,14 @@ export function FriendsPanel({
                     </div>
                   </div>
                   {friend.pondPreview.length > 0 && (
-                    <p className="mt-1 text-sm" aria-hidden>
-                      {friend.pondPreview
-                        .map((entry) => SPECIES_BY_ID[entry.speciesId]?.emoji ?? "🐟")
-                        .join(" ")}
+                    <p className="mt-1 flex flex-wrap items-center gap-1.5" aria-hidden>
+                      {friend.pondPreview.map((entry, index) => (
+                        <SpeciesIcon
+                          key={`${entry.speciesId}-${index}`}
+                          speciesId={entry.speciesId}
+                          size={18}
+                        />
+                      ))}
                     </p>
                   )}
                   {state.bag.length > 0 && (
@@ -229,7 +244,6 @@ export function FriendsPanel({
                         {t(locale, "friends.tradeCreate")}:
                       </span>
                       {state.bag.slice(0, 3).map((fish) => {
-                        const species = SPECIES_BY_ID[fish.speciesId];
                         const price = Math.round(fishValue(state, fish) * 1.1);
                         return (
                           <Button
@@ -247,7 +261,8 @@ export function FriendsPanel({
                               })
                             }
                           >
-                            {species?.emoji} {formatNumber(price, locale)}🪙
+                            <SpeciesIcon speciesId={fish.speciesId} size={14} />
+                            {formatNumber(price, locale)}🪙
                           </Button>
                         );
                       })}
@@ -304,8 +319,9 @@ export function FriendsPanel({
                   className="flex items-center justify-between gap-2 rounded-xl border border-card-edge bg-card px-2.5 py-2"
                 >
                   <span className="min-w-0 text-[12px]">
-                    <b>
-                      {species?.emoji} {species ? pick(locale, species.name) : trade.speciesId}
+                    <b className="inline-flex items-center gap-1 align-middle">
+                      <SpeciesIcon speciesId={trade.speciesId} size={14} />
+                      {species ? pick(locale, species.name) : trade.speciesId}
                     </b>{" "}
                     {trade.sizeCm}
                     {t(locale, "common.cm")} · {"★".repeat(trade.stars)}

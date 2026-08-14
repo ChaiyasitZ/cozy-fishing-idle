@@ -12,7 +12,7 @@ import {
 } from "@/game/engine";
 import type { Locale, PondFish } from "@/game/types";
 import { Bar, Button, EmptyState, Panel } from "@/components/ui/primitives";
-import { FishCard } from "./FishCard";
+import { FishCard, SpeciesIcon } from "./FishCard";
 import { formatNumber, pick, t } from "@/lib/i18n";
 import { useNow } from "@/lib/hooks";
 import { useGame } from "@/store/gameStore";
@@ -118,9 +118,10 @@ export function PondPanel({ locale }: { locale: Locale }) {
             return (
               <span
                 key={id}
-                className="rounded-full border border-water bg-foam px-2 py-0.5 text-[11px] font-bold"
+                className="inline-flex items-center gap-1 rounded-full border border-water bg-foam px-2 py-0.5 text-[11px] font-bold"
               >
-                {species?.emoji} {species ? pick(locale, species.name) : id}
+                {fish && <SpeciesIcon speciesId={fish.speciesId} size={14} />}
+                {species ? pick(locale, species.name) : id}
               </span>
             );
           })}

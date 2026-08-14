@@ -1,8 +1,8 @@
 "use client";
 
-import { SPECIES_BY_ID } from "@/game/data";
 import { formatDuration } from "@/game/engine";
 import type { Locale } from "@/game/types";
+import { SpeciesIcon } from "@/components/game/FishCard";
 import { Button, Modal } from "@/components/ui/primitives";
 import { formatNumber, t } from "@/lib/i18n";
 import { useGame } from "@/store/gameStore";
@@ -39,11 +39,13 @@ export function WelcomeBack({ locale }: { locale: Locale }) {
           <p className="text-[12px] font-bold">
             {t(locale, "welcome.catCaught")} {report.caught.length}
           </p>
-          <p className="text-lg" aria-hidden>
-            {[...bySpecies.entries()]
-              .map(([speciesId, count]) => `${SPECIES_BY_ID[speciesId]?.emoji ?? "🐟"}×${count}`)
-              .join("  ")}
-          </p>
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+            {[...bySpecies.entries()].map(([speciesId, count]) => (
+              <span key={speciesId} className="flex items-center gap-1 text-[13px] font-bold">
+                <SpeciesIcon speciesId={speciesId} size={20} />×{count}
+              </span>
+            ))}
+          </div>
         </div>
       )}
 

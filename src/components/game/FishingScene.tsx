@@ -16,6 +16,7 @@ import {
   weatherAt,
   TIME_LABEL,
   WEATHER_LABEL,
+  WEATHER_LUCK,
 } from "@/game/engine";
 import type { Locale, WeatherId, ZoneId } from "@/game/types";
 import { Button } from "@/components/ui/primitives";
@@ -24,6 +25,10 @@ import { FishAvatar, Stars } from "./FishCard";
 import { formatNumber, pick, t } from "@/lib/i18n";
 import { useGame } from "@/store/gameStore";
 import { useNow } from "@/lib/hooks";
+
+/** Read-only status pill over the scene; hovering explains what it changes. */
+const CHIP =
+  "cursor-help rounded-full bg-black/25 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur-sm";
 
 export function FishingScene({ locale }: { locale: Locale }) {
   const state = useGame((s) => s.state);
@@ -92,14 +97,16 @@ export function FishingScene({ locale }: { locale: Locale }) {
     setAutoFishing,
   ]);
 
+  // Two drifting shapes are enough to show the water is alive. More than that
+  // just crowded the surface and competed with the fish art for attention.
   const shadows = useMemo(() => {
     const pool = SPECIES_BY_ZONE[state.zoneId] ?? [];
-    return pool.slice(0, 4).map((species, index) => ({
+    return pool.slice(0, 2).map((species, index) => ({
       emoji: species.emoji,
-      top: 52 + index * 11,
-      duration: 11 + index * 4,
-      delay: index * -3.5,
-      scale: 0.7 + index * 0.12,
+      top: 16 + index * 20,
+      duration: 16 + index * 6,
+      delay: index * -7,
+      scale: 0.8 + index * 0.25,
     }));
   }, [state.zoneId]);
 
@@ -129,13 +136,16 @@ export function FishingScene({ locale }: { locale: Locale }) {
           {shadows.map((shadow, index) => (
             <span
               key={index}
-              className="animate-swim absolute text-2xl opacity-25"
+              className="animate-swim absolute text-2xl"
               style={{
-                top: `${shadow.top - 40}%`,
+                top: `${shadow.top}%`,
                 animationDuration: `${shadow.duration}s`,
                 animationDelay: `${shadow.delay}s`,
                 transform: `scale(${shadow.scale})`,
-                filter: "blur(1px)",
+                // Flatten the emoji into a dark blob so it reads as something
+                // moving under the surface, not a second style of fish art.
+                filter: "blur(2px) brightness(0)",
+                opacity: 0.18,
               }}
               aria-hidden
             >
@@ -162,13 +172,21 @@ export function FishingScene({ locale }: { locale: Locale }) {
 
         {/* zone + weather chips */}
         <div className="absolute inset-x-0 top-0 flex flex-wrap items-center gap-1.5 p-2.5">
-          <span className="rounded-full bg-black/25 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur-sm">
+          <span
+            className={CHIP}
+            title={`${t(locale, "fish.tipZone")} · ×${zone.valueMultiplier}`}
+          >
             {zone.emoji} {pick(locale, zone.name)}
           </span>
-          <span className="rounded-full bg-black/25 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur-sm">
+          <span className={CHIP} title={t(locale, "fish.tipTime")}>
             {TIME_LABEL[tod].emoji} {pick(locale, TIME_LABEL[tod])}
           </span>
-          <span className="rounded-full bg-black/25 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur-sm">
+          <span
+            className={CHIP}
+            title={`${t(locale, "fish.tipWeather")} · ${t(locale, "fish.luck")} +${Math.round(
+              WEATHER_LUCK[weather] * 100,
+            )}%`}
+          >
             {WEATHER_LABEL[weather].emoji} {pick(locale, WEATHER_LABEL[weather])}
           </span>
         </div>
@@ -201,12 +219,20 @@ export function FishingScene({ locale }: { locale: Locale }) {
                 onClick={() => void doCast()}
                 disabled={phase !== "idle"}
                 className="min-w-[62%] shadow-[var(--shadow-soft)]"
+                title={t(locale, "fish.tipCast")}
               >
                 <span aria-hidden>🎣</span>
                 {phase === "idle" ? t(locale, "fish.cast") : t(locale, "fish.cooldown")}
               </Button>
               <div className="flex flex-wrap items-center justify-center gap-1.5">
-                <span className="rounded-full bg-black/25 px-2.5 py-1 text-[11px] font-semibold text-white">
+                <span
+                  className="cursor-help rounded-full bg-black/25 px-2.5 py-1 text-[11px] font-semibold text-white"
+                  title={
+                    bait && baitCount > 0
+                      ? t(locale, "fish.tipBait")
+                      : t(locale, "fish.tipNoBait")
+                  }
+                >
                   {t(locale, "fish.bait")}:{" "}
                   {bait && baitCount > 0
                     ? `${bait.emoji} ${pick(locale, bait.name)} ×${formatNumber(baitCount, locale)}`
@@ -223,8 +249,8 @@ export function FishingScene({ locale }: { locale: Locale }) {
                   } disabled:cursor-not-allowed disabled:opacity-55`}
                   title={
                     helperLevel <= 0
-                      ? t(locale, "fish.autoLocked")
-                      : `${Math.round(autoIntervalMs / 1000)}s`
+                      ? t(locale, "fish.tipAutoLocked")
+                      : `${t(locale, "fish.tipAuto")} ${Math.round(autoIntervalMs / 1000)}s`
                   }
                 >
                   <span aria-hidden>{helperLevel > 0 ? "🐈" : "🔒"}</span>{" "}

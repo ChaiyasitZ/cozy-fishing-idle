@@ -138,6 +138,35 @@ export function SpeciesAvatar({
   );
 }
 
+/**
+ * Bare species art for inline text rows and chips. Uses the same picture as the
+ * Fishdex so a fish looks the same everywhere; falls back to the emoji.
+ */
+export function SpeciesIcon({ speciesId, size = 18 }: { speciesId: string; size?: number }) {
+  const species = SPECIES_BY_ID[speciesId];
+  if (!species) return null;
+  if (!species.image) {
+    return (
+      <span className="shrink-0 leading-none" style={{ fontSize: size }} aria-hidden>
+        {species.emoji}
+      </span>
+    );
+  }
+  const width = Math.round(size * 1.45);
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- small static public assets
+    <img
+      src={species.image}
+      alt=""
+      width={width}
+      height={size}
+      className="shrink-0 object-contain"
+      style={{ width, height: size }}
+      draggable={false}
+    />
+  );
+}
+
 /** Full-bleed Fishdex card portrait — transparent fish on water wash. */
 export function SpeciesCardPortrait({
   speciesId,

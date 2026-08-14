@@ -41,6 +41,36 @@ export const STRINGS = {
   "fish.autoOn": { th: "ตกอัตโนมัติ: เปิด", en: "Auto-fish: On" },
   "fish.autoOff": { th: "ตกอัตโนมัติ: ปิด", en: "Auto-fish: Off" },
   "fish.autoLocked": { th: "ต้องมีแมวลูกเรือ", en: "Needs Deck Cat" },
+  "fish.luck": { th: "โชค", en: "Luck" },
+  "fish.tipZone": {
+    th: "แหล่งที่ตกอยู่ตอนนี้ · โซนไกลขายปลาได้ราคาดีกว่า",
+    en: "Where you're fishing now. Farther spots sell fish for more.",
+  },
+  "fish.tipTime": {
+    th: "ช่วงเวลาของวัน · ปลาบางชนิดขึ้นเฉพาะบางช่วงเท่านั้น",
+    en: "Time of day. Some fish only bite at certain hours.",
+  },
+  "fish.tipWeather": {
+    th: "อากาศเปลี่ยนทุก 3 ชม. · มีผลกับโอกาสเจอปลาหายาก",
+    en: "Weather changes every 3h and shifts your odds of rare fish.",
+  },
+  "fish.tipBait": {
+    th: "ใช้เหยื่อ 1 ชิ้นต่อการเหวี่ยง 1 ครั้ง ช่วยเพิ่มโชคและขนาดปลา",
+    en: "Uses one bait per cast. Raises luck and fish size.",
+  },
+  "fish.tipNoBait": {
+    th: "ยังไม่ได้ใส่เหยื่อ ซื้อได้ที่ร้านค้า",
+    en: "No bait equipped — buy some in the shop.",
+  },
+  "fish.tipCast": { th: "เหวี่ยงเบ็ดลงน้ำ · กด Space ก็ได้", en: "Cast your line, or press Space." },
+  "fish.tipAuto": {
+    th: "ให้แมวลูกเรือเหวี่ยงและดึงให้เอง ทุก",
+    en: "The deck cat casts and reels for you, every",
+  },
+  "fish.tipAutoLocked": {
+    th: "ต้องซื้อแมวลูกเรือที่ร้านค้าก่อน",
+    en: "Buy the Deck Cat in the shop first.",
+  },
   "fish.zone": { th: "แหล่งตกปลา", en: "Fishing spot" },
   "fish.travel": { th: "ย้ายไปตกที่นี่", en: "Fish here" },
   "fish.unlock": { th: "ปลดล็อก", en: "Unlock" },
