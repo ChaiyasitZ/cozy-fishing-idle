@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button, Panel } from "@/components/ui/primitives";
 import { loadLocalState, markSaveForUpload } from "@/lib/save/local";
@@ -34,13 +35,13 @@ export function LoginForm({ configured }: { configured: boolean }) {
     if (local && local.stats.casts > 0) markSaveForUpload(local);
   };
 
-  const oauth = async (provider: "google" | "discord") => {
+  const oauth = async () => {
     const supabase = createClient();
     if (!supabase) return;
     stashLocalSave();
     setBusy(true);
     const { error } = await supabase.auth.signInWithOAuth({
-      provider,
+      provider: "google",
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
     if (error) {
@@ -105,11 +106,16 @@ export function LoginForm({ configured }: { configured: boolean }) {
   return (
     <Panel title="เข้าสู่ระบบ">
       <div className="flex flex-col gap-2">
-        <Button tone="ghost" full disabled={busy} onClick={() => void oauth("google")}>
-          <span aria-hidden>🟦</span> ต่อด้วย Google
-        </Button>
-        <Button tone="ghost" full disabled={busy} onClick={() => void oauth("discord")}>
-          <span aria-hidden>🎮</span> ต่อด้วย Discord
+        <Button tone="ghost" full disabled={busy} onClick={() => void oauth()}>
+          <Image
+            src="/icons/google.png"
+            alt=""
+            aria-hidden
+            width={18}
+            height={18}
+            className="h-[18px] w-[18px]"
+          />
+          ต่อด้วย Google
         </Button>
 
         <div className="my-1 flex items-center gap-2 text-[11px] text-ink-soft">

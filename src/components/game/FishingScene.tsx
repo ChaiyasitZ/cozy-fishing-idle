@@ -9,7 +9,14 @@ import {
   SPECIES_BY_ZONE,
   ZONE_BY_ID,
 } from "@/game/data";
-import { timeOfDay, weatherAt, TIME_LABEL, WEATHER_LABEL } from "@/game/engine";
+import {
+  getModifiers,
+  nextBarHitMs,
+  timeOfDay,
+  weatherAt,
+  TIME_LABEL,
+  WEATHER_LABEL,
+} from "@/game/engine";
 import type { Locale, WeatherId, ZoneId } from "@/game/types";
 import { Button } from "@/components/ui/primitives";
 import { TensionBar } from "./TensionBar";
@@ -24,8 +31,10 @@ export function FishingScene({ locale }: { locale: Locale }) {
   const cast = useGame((s) => s.cast);
   const barStartedAt = useGame((s) => s.barStartedAt);
   const lastResult = useGame((s) => s.lastResult);
+  const autoFishing = useGame((s) => s.autoFishing);
   const doCast = useGame((s) => s.doCast);
   const doTap = useGame((s) => s.doTap);
+  const setAutoFishing = useGame((s) => s.setAutoFishing);
   const now = useNow(1000);
 
   const zone = ZONE_BY_ID[state.zoneId];
@@ -33,6 +42,8 @@ export function FishingScene({ locale }: { locale: Locale }) {
   const weather = weatherAt(now);
   const bait = state.equippedBaitId ? ITEM_BY_ID[state.equippedBaitId] : null;
   const baitCount = state.equippedBaitId ? state.items[state.equippedBaitId] ?? 0 : 0;
+  const helperLevel = state.upgrades.helper ?? 0;
+  const autoIntervalMs = getModifiers(state).activeAutoCatchIntervalMs;
 
   // Space bar: cast when idle, reel when hooked. The main desktop control.
   useEffect(() => {
@@ -47,6 +58,39 @@ export function FishingScene({ locale }: { locale: Locale }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [phase, doCast, doTap]);
+
+  // The Deck Cat casts on a calm timer and reels at the next legal timing
+  // window. Turning auto-fishing off leaves the current cast to the player.
+  useEffect(() => {
+    if (!autoFishing) return;
+    if (helperLevel <= 0) {
+      setAutoFishing(false);
+      return;
+    }
+
+    if (phase === "idle") {
+      const timer = window.setTimeout(() => void doCast(), autoIntervalMs);
+      return () => window.clearTimeout(timer);
+    }
+
+    if (phase === "hooked" && cast) {
+      const elapsed = Math.max(0, performance.now() - barStartedAt);
+      const hitAt = nextBarHitMs(cast, elapsed + 80);
+      const tapIn = hitAt === null ? Math.max(0, cast.timeoutMs - elapsed) : hitAt - elapsed;
+      const timer = window.setTimeout(() => void doTap(), Math.max(0, tapIn));
+      return () => window.clearTimeout(timer);
+    }
+  }, [
+    autoFishing,
+    autoIntervalMs,
+    barStartedAt,
+    cast,
+    doCast,
+    doTap,
+    helperLevel,
+    phase,
+    setAutoFishing,
+  ]);
 
   const shadows = useMemo(() => {
     const pool = SPECIES_BY_ZONE[state.zoneId] ?? [];
@@ -161,12 +205,36 @@ export function FishingScene({ locale }: { locale: Locale }) {
                 <span aria-hidden>🎣</span>
                 {phase === "idle" ? t(locale, "fish.cast") : t(locale, "fish.cooldown")}
               </Button>
-              <span className="rounded-full bg-black/25 px-2.5 py-1 text-[11px] font-semibold text-white">
-                {t(locale, "fish.bait")}:{" "}
-                {bait && baitCount > 0
-                  ? `${bait.emoji} ${pick(locale, bait.name)} ×${formatNumber(baitCount, locale)}`
-                  : t(locale, "fish.noBait")}
-              </span>
+              <div className="flex flex-wrap items-center justify-center gap-1.5">
+                <span className="rounded-full bg-black/25 px-2.5 py-1 text-[11px] font-semibold text-white">
+                  {t(locale, "fish.bait")}:{" "}
+                  {bait && baitCount > 0
+                    ? `${bait.emoji} ${pick(locale, bait.name)} ×${formatNumber(baitCount, locale)}`
+                    : t(locale, "fish.noBait")}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setAutoFishing(!autoFishing)}
+                  disabled={helperLevel <= 0}
+                  className={`rounded-full border px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur-sm transition ${
+                    autoFishing
+                      ? "border-sun bg-moss/90 shadow-[0_0_0_2px_rgba(255,255,255,0.22)]"
+                      : "border-white/35 bg-black/25 hover:bg-black/35"
+                  } disabled:cursor-not-allowed disabled:opacity-55`}
+                  title={
+                    helperLevel <= 0
+                      ? t(locale, "fish.autoLocked")
+                      : `${Math.round(autoIntervalMs / 1000)}s`
+                  }
+                >
+                  <span aria-hidden>{helperLevel > 0 ? "🐈" : "🔒"}</span>{" "}
+                  {helperLevel <= 0
+                    ? t(locale, "fish.autoLocked")
+                    : autoFishing
+                      ? t(locale, "fish.autoOn")
+                      : t(locale, "fish.autoOff")}
+                </button>
+              </div>
             </div>
           )}
         </div>

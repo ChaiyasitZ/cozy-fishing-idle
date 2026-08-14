@@ -44,6 +44,8 @@ interface GameStore {
   cast: PendingCast | null;
   /** performance.now() when the tension bar started, for tap timing. */
   barStartedAt: number;
+  /** Session-only toggle; requires at least one Deck Cat upgrade. */
+  autoFishing: boolean;
   lastResult: CatchResult | null;
   welcomeBack: IdleReport | null;
 
@@ -64,6 +66,7 @@ interface GameStore {
   setSaveLocked: (locked: boolean) => void;
   doCast: () => Promise<void>;
   doTap: () => Promise<void>;
+  setAutoFishing: (enabled: boolean) => void;
   setTab: (tab: Tab) => void;
   toggleSelect: (id: string) => void;
   selectAll: () => void;
@@ -93,6 +96,7 @@ export const useGame = create<GameStore>((set, get) => ({
   phase: "idle",
   cast: null,
   barStartedAt: 0,
+  autoFishing: false,
   lastResult: null,
   welcomeBack: null,
 
@@ -193,6 +197,11 @@ export const useGame = create<GameStore>((set, get) => ({
     window.setTimeout(() => {
       if (get().phase === "reveal") set({ phase: "idle" });
     }, result?.outcome === "fish" ? 1500 : 1000);
+  },
+
+  setAutoFishing: (autoFishing) => {
+    const unlocked = (get().state.upgrades.helper ?? 0) > 0;
+    set({ autoFishing: unlocked && autoFishing });
   },
 
   setTab: (tab) => set({ tab, selection: [], breedSelection: [] }),

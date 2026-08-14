@@ -18,6 +18,8 @@ export interface Modifiers {
   castCooldownMs: number;
   /** Time the deck cat needs per offline catch; Infinity without a cat. */
   autoCatchIntervalMs: number;
+  /** Delay between casts while the deck cat fishes with the game open. */
+  activeAutoCatchIntervalMs: number;
   blessing: number;
 }
 
@@ -53,6 +55,8 @@ export function getModifiers(state: GameState): Modifiers {
     mutationChance: 0.008 + skill(state, "breeder") * 0.02 + blessing * 0.02,
     castCooldownMs: Math.max(420, 900 * (1 - skill(state, "swift") * 0.06)),
     autoCatchIntervalMs: helper > 0 ? 120_000 / (1 + (helper - 1) * 0.45) : Infinity,
+    activeAutoCatchIntervalMs:
+      helper > 0 ? Math.max(5_000, 12_000 / (1 + (helper - 1) * 0.1)) : Infinity,
     blessing,
   };
 }

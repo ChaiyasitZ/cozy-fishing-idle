@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { SPECIES_BY_ID } from "@/game/data";
 import type { GameState } from "@/game/types";
 import { applyCommand } from "./commands";
-import { barPosition, CAST_TIMEOUT_MS } from "./catch";
+import { barPosition, CAST_TIMEOUT_MS, nextBarHitMs } from "./catch";
 import { fishValue } from "./economy";
 import { resolveIdle } from "./idle";
 import { getModifiers } from "./modifiers";
@@ -106,6 +106,15 @@ describe("tension bar", () => {
       inside = hit;
     }
     expect(entries).toBeGreaterThanOrEqual(3);
+  });
+
+  it("finds a legal timing window for the deck cat", () => {
+    const pending = applyCommand(freshState(), { type: "cast" }, T0).state.pendingCast!;
+    const hitAt = nextBarHitMs(pending, 100);
+    expect(hitAt).not.toBeNull();
+    expect(
+      Math.abs(barPosition(pending.barSeed, hitAt!, pending.sweepMs) - pending.zoneCenter),
+    ).toBeLessThanOrEqual(pending.zoneWidth / 2);
   });
 });
 
@@ -229,6 +238,15 @@ describe("economy", () => {
     expect(bought.effects.ok).toBe(true);
     expect(bought.state.coins).toBeLessThan(100_000);
     expect(getModifiers(bought.state).bagCapacity).toBeGreaterThan(getModifiers(state).bagCapacity);
+  });
+
+  it("unlocks active auto-fishing with the Deck Cat upgrade", () => {
+    const state = freshState();
+    expect(getModifiers(state).activeAutoCatchIntervalMs).toBe(Infinity);
+    state.upgrades.helper = 1;
+    expect(getModifiers(state).activeAutoCatchIntervalMs).toBe(12_000);
+    state.upgrades.helper = 12;
+    expect(getModifiers(state).activeAutoCatchIntervalMs).toBeLessThan(12_000);
   });
 
   it("keeps zones locked until their requirements are met", () => {

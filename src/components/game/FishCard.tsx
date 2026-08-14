@@ -72,7 +72,7 @@ export function FishAvatar({
           alt=""
           width={Math.round(size * 1.45)}
           height={size}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-contain p-[4%]"
           draggable={false}
         />
       ) : (
@@ -123,7 +123,7 @@ export function SpeciesAvatar({
           alt=""
           width={Math.round(size * 1.45)}
           height={size}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-contain p-[4%]"
           draggable={false}
         />
       </PortraitFrame>
@@ -138,7 +138,7 @@ export function SpeciesAvatar({
   );
 }
 
-/** Full-bleed Fishdex card portrait — cropped fish art fills the box. */
+/** Full-bleed Fishdex card portrait — transparent fish on water wash. */
 export function SpeciesCardPortrait({
   speciesId,
   locked = false,
@@ -167,7 +167,7 @@ export function SpeciesCardPortrait({
         <img
           src={species.image}
           alt=""
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-contain p-2"
           draggable={false}
         />
       ) : (

@@ -49,7 +49,7 @@ alter table public.profiles enable row level security;
 
 drop policy if exists "profiles: read own" on public.profiles;
 create policy "profiles: read own" on public.profiles
-  for select to authenticated using (auth.uid() = id);
+  for select to authenticated using ((select auth.uid()) = id);
 
 -- Canonical list of columns that are safe to show other players. Reads happen
 -- server-side; access is revoked here so the Data API can never expose it.
@@ -81,7 +81,7 @@ alter table public.friendships enable row level security;
 
 drop policy if exists "friendships: read own" on public.friendships;
 create policy "friendships: read own" on public.friendships
-  for select to authenticated using (auth.uid() = user_id or auth.uid() = friend_id);
+  for select to authenticated using ((select auth.uid()) = user_id or (select auth.uid()) = friend_id);
 
 -- ------------------------------------------------------------------- gifts ---
 create table if not exists public.gifts (
@@ -102,7 +102,7 @@ alter table public.gifts enable row level security;
 
 drop policy if exists "gifts: read own" on public.gifts;
 create policy "gifts: read own" on public.gifts
-  for select to authenticated using (auth.uid() = to_user or auth.uid() = from_user);
+  for select to authenticated using ((select auth.uid()) = to_user or (select auth.uid()) = from_user);
 
 -- -------------------------------------------------------------- pond visits ---
 create table if not exists public.pond_visits (
@@ -120,7 +120,7 @@ alter table public.pond_visits enable row level security;
 
 drop policy if exists "pond_visits: read own" on public.pond_visits;
 create policy "pond_visits: read own" on public.pond_visits
-  for select to authenticated using (auth.uid() = visitor_id or auth.uid() = host_id);
+  for select to authenticated using ((select auth.uid()) = visitor_id or (select auth.uid()) = host_id);
 
 -- ------------------------------------------------------------ trade offers ---
 -- The fish is escrowed as a JSON snapshot: it leaves the seller's save when the
@@ -143,7 +143,7 @@ alter table public.trade_offers enable row level security;
 
 drop policy if exists "trades: read own" on public.trade_offers;
 create policy "trades: read own" on public.trade_offers
-  for select to authenticated using (auth.uid() = from_user or auth.uid() = to_user);
+  for select to authenticated using ((select auth.uid()) = from_user or (select auth.uid()) = to_user);
 
 -- ------------------------------------------------------------------ guilds ---
 create table if not exists public.guilds (
@@ -155,15 +155,6 @@ create table if not exists public.guilds (
 );
 
 alter table public.guilds enable row level security;
-
-drop policy if exists "guilds: read member" on public.guilds;
-create policy "guilds: read member" on public.guilds
-  for select to authenticated using (
-    exists (
-      select 1 from public.guild_members m
-       where m.guild_id = guilds.id and m.user_id = auth.uid()
-    )
-  );
 
 create table if not exists public.guild_members (
   guild_id uuid not null references public.guilds (id) on delete cascade,
@@ -177,13 +168,23 @@ create index if not exists guild_members_user_idx on public.guild_members (user_
 
 alter table public.guild_members enable row level security;
 
+-- Created after guild_members so Postgres can validate the subquery at parse time.
+drop policy if exists "guilds: read member" on public.guilds;
+create policy "guilds: read member" on public.guilds
+  for select to authenticated using (
+    exists (
+      select 1 from public.guild_members m
+       where m.guild_id = guilds.id and m.user_id = (select auth.uid())
+    )
+  );
+
 drop policy if exists "guild_members: read own guild" on public.guild_members;
 create policy "guild_members: read own guild" on public.guild_members
   for select to authenticated using (
-    user_id = auth.uid()
+    user_id = (select auth.uid())
     or exists (
       select 1 from public.guild_members mine
-       where mine.guild_id = guild_members.guild_id and mine.user_id = auth.uid()
+       where mine.guild_id = guild_members.guild_id and mine.user_id = (select auth.uid())
     )
   );
 
@@ -203,7 +204,7 @@ create policy "guild_goals: read own guild" on public.guild_goals
   for select to authenticated using (
     exists (
       select 1 from public.guild_members m
-       where m.guild_id = guild_goals.guild_id and m.user_id = auth.uid()
+       where m.guild_id = guild_goals.guild_id and m.user_id = (select auth.uid())
     )
   );
 
@@ -223,4 +224,7 @@ alter table public.audit_log enable row level security;
 
 drop policy if exists "audit: read own" on public.audit_log;
 create policy "audit: read own" on public.audit_log
-  for select to authenticated using (auth.uid() = user_id);
+  for select to authenticated using ((select auth.uid()) = user_id);
+
+create index if not exists friendships_requested_by_idx on public.friendships (requested_by);
+create index if not exists guilds_owner_idx on public.guilds (owner_id);

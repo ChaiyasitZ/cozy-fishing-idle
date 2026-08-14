@@ -48,6 +48,22 @@ export function barPosition(barSeed: number, elapsedMs: number, sweepMs: number)
   return u < 0.5 ? u * 2 : 2 - u * 2;
 }
 
+/**
+ * Finds the next moment the marker enters the timing zone. Used by the deck
+ * cat while auto-fishing; the normal player control still resolves from the
+ * actual tap time.
+ */
+export function nextBarHitMs(cast: PendingCast, fromMs = 0): number | null {
+  const start = Math.max(0, Math.floor(fromMs));
+  const half = cast.zoneWidth / 2;
+  for (let elapsed = start; elapsed < cast.timeoutMs; elapsed += 8) {
+    if (Math.abs(barPosition(cast.barSeed, elapsed, cast.sweepMs) - cast.zoneCenter) <= half) {
+      return elapsed;
+    }
+  }
+  return null;
+}
+
 export function contextLuck(state: GameState, zoneId: ZoneId, now: number): number {
   const mods = getModifiers(state);
   const tod = timeOfDay(now);
