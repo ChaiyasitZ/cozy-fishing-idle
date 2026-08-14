@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Cozy Fishing Idle">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe9c2"/>
+      <stop offset="1" stop-color="#ffd7a1"/>
+    </linearGradient>
+    <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7fd1cd"/>
+      <stop offset="1" stop-color="#0d5c6b"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#sky)"/>
+  <path d="M0 300 Q 64 268 128 300 T 256 300 T 384 300 T 512 300 V512 H0 Z" fill="url(#water)"/>
+  <circle cx="384" cy="128" r="44" fill="#f4c453"/>
+  <g transform="translate(150 360) rotate(-8)">
+    <ellipse cx="0" cy="0" rx="92" ry="56" fill="#ef8264"/>
+    <path d="M78 0 L150 -46 L150 46 Z" fill="#ef8264"/>
+    <circle cx="-44" cy="-14" r="12" fill="#fffaf0"/>
+    <circle cx="-44" cy="-14" r="5" fill="#3d2b1f"/>
+    <path d="M-20 -34 Q 10 -60 44 -34" stroke="#fdf4e3" stroke-width="10" fill="none" stroke-linecap="round"/>
+  </g>
+  <path d="M300 96 L204 336" stroke="#8b5e3c" stroke-width="16" stroke-linecap="round"/>
+  <path d="M204 336 Q 232 356 258 344" stroke="#fffaf0" stroke-width="7" fill="none" stroke-linecap="round"/>
+</svg>

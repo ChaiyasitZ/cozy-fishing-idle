@@ -1,0 +1,209 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Cozy palette: warm sand paper, calm teal water, sunset coral accents. */
+:root {
+  --paper: #fdf4e3;
+  --paper-2: #f7e8cd;
+  --ink: #3d2b1f;
+  --ink-soft: #7a6250;
+  --card: #fffaf0;
+  --card-edge: #e5d3b3;
+
+  --water-deep: #0d5c6b;
+  --water: #1d8b9c;
+  --water-light: #7fd1cd;
+  --foam: #e6f7f4;
+
+  --coral: #ef8264;
+  --sun: #f4c453;
+  --moss: #7fa653;
+  --wood: #8b5e3c;
+  --plum: #8a6ea8;
+
+  --shadow: 0 2px 0 0 var(--card-edge);
+  --shadow-soft: 0 8px 24px -12px rgb(61 43 31 / 0.35);
+}
+
+.dark {
+  --paper: #10222b;
+  --paper-2: #16303c;
+  --ink: #eadfc9;
+  --ink-soft: #a2b3b8;
+  --card: #17323e;
+  --card-edge: #22485a;
+
+  --water-deep: #061f28;
+  --water: #10505f;
+  --water-light: #2f8b93;
+  --foam: #1d3f4b;
+
+  --coral: #e97a5e;
+  --sun: #e8bb4f;
+  --moss: #7ba055;
+  --wood: #a9784f;
+  --plum: #a184c0;
+
+  --shadow: 0 2px 0 0 var(--card-edge);
+  --shadow-soft: 0 8px 24px -12px rgb(0 0 0 / 0.6);
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-card: var(--card);
+  --color-card-edge: var(--card-edge);
+
+  --color-water-deep: var(--water-deep);
+  --color-water: var(--water);
+  --color-water-light: var(--water-light);
+  --color-foam: var(--foam);
+
+  --color-coral: var(--coral);
+  --color-sun: var(--sun);
+  --color-moss: var(--moss);
+  --color-wood: var(--wood);
+  --color-plum: var(--plum);
+
+  --font-sans: var(--font-quicksand), var(--font-noto-thai), ui-sans-serif, system-ui,
+    sans-serif;
+
+  --radius-cozy: 1.25rem;
+
+  --animate-wave-slow: wave 14s linear infinite;
+  --animate-wave-fast: wave 9s linear infinite;
+  --animate-bob: bob 2.6s ease-in-out infinite;
+  --animate-float-up: float-up 1.1s ease-out forwards;
+  --animate-pop-in: pop-in 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  --animate-swim: swim 12s linear infinite;
+  --animate-sheen: sheen 2.4s ease-in-out infinite;
+
+  @keyframes wave {
+    from {
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
+  @keyframes bob {
+    0%,
+    100% {
+      transform: translateY(0) rotate(-2deg);
+    }
+    50% {
+      transform: translateY(-7px) rotate(2deg);
+    }
+  }
+  @keyframes float-up {
+    from {
+      opacity: 0;
+      transform: translateY(6px) scale(0.9);
+    }
+    35% {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-42px) scale(1.05);
+    }
+  }
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: scale(0.82) translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+  @keyframes swim {
+    from {
+      transform: translateX(-12%) scaleX(1);
+    }
+    49.9% {
+      transform: translateX(108%) scaleX(1);
+    }
+    50% {
+      transform: translateX(108%) scaleX(-1);
+    }
+    to {
+      transform: translateX(-12%) scaleX(-1);
+    }
+  }
+  @keyframes sheen {
+    0%,
+    100% {
+      opacity: 0.25;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
+}
+
+html {
+  color-scheme: light;
+  -webkit-text-size-adjust: 100%;
+}
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Touch targets should never be selectable-draggy on mobile. */
+button,
+[role="button"] {
+  touch-action: manipulation;
+  user-select: none;
+}
+
+@utility safe-b {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@utility safe-t {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+@utility cozy-card {
+  background-color: var(--card);
+  border: 1px solid var(--card-edge);
+  border-radius: var(--radius-cozy);
+  box-shadow: var(--shadow);
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Respect the user's motion preference, and our in-game toggle. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+html[data-motion="reduced"] *,
+html[data-motion="reduced"] *::before,
+html[data-motion="reduced"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
