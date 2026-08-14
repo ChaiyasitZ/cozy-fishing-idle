@@ -74,12 +74,18 @@ export const UPGRADES: Upgrade[] = [
   {
     id: "helper",
     name: { th: "แมวลูกเรือ", en: "Deck Cat" },
-    blurb: { th: "ช่วยตกปลาให้ตอนคุณไม่อยู่", en: "Fishes for you while you're away." },
+    blurb: {
+      th: "เปิดตกอัตโนมัติได้ และยังตกให้ตอนคุณไม่อยู่",
+      en: "Unlocks auto-fishing, and keeps casting while you're away.",
+    },
     emoji: "🐈",
     maxLevel: 12,
     baseCost: 500,
     costGrowth: 1.72,
-    effect: { th: "ตกออฟไลน์เร็วขึ้น", en: "Faster offline catches" },
+    effect: {
+      th: "รอบตกอัตโนมัติและออฟไลน์เร็วขึ้น",
+      en: "Faster auto & offline casts",
+    },
   },
   {
     id: "rack",

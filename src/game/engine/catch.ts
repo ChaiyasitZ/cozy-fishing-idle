@@ -126,7 +126,7 @@ function rollSize(rng: Rng, species: Species, sizeMultiplier: number): number {
   return Math.round(Math.min(max * 1.3, Math.max(min * 0.85, raw)) * 10) / 10;
 }
 
-/** Rolls one fish for a zone. Shared by casting and by the deck cat's offline work. */
+/** Rolls one fish for a zone. Shared by player casts and by the deck cat. */
 export function rollFish(
   state: GameState,
   zoneId: ZoneId,

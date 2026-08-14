@@ -16,9 +16,9 @@ export interface Modifiers {
   growthMultiplier: number;
   mutationChance: number;
   castCooldownMs: number;
-  /** Time the deck cat needs per offline catch; Infinity without a cat. */
+  /** Time between deck-cat catches while away; Infinity without a cat. */
   autoCatchIntervalMs: number;
-  /** Delay between casts while the deck cat fishes with the game open. */
+  /** Delay between casts when auto-fishing is on with the game open. */
   activeAutoCatchIntervalMs: number;
   blessing: number;
 }
