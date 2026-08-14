@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { SPECIES_BY_ID } from "@/game/data";
-import type { GameState } from "@/game/types";
+import { SKILLS, SPECIES_BY_ID, UPGRADE_BY_ID, UPGRADES } from "@/game/data";
+import type { GameState, SkillId, UpgradeId } from "@/game/types";
 import { applyCommand } from "./commands";
-import { barPosition, CAST_TIMEOUT_MS, nextBarHitMs } from "./catch";
-import { fishValue } from "./economy";
+import { barPosition, CAST_TIMEOUT_MS, contextLuck, nextBarHitMs } from "./catch";
+import { ALL_ZONES, fishValue, zoneUnlockState } from "./economy";
 import { resolveIdle } from "./idle";
 import { getModifiers } from "./modifiers";
 import { pendingHarvest } from "./pond";
@@ -506,6 +506,132 @@ describe("saves", () => {
   it("drops a save from an unknown future version rather than trusting it", () => {
     const future = { ...freshState(), version: 9999 } as GameState;
     expect(() => migrateState(future)).not.toThrow();
+  });
+});
+
+describe("gear and skills", () => {
+  /** First hour of the test day the world clock calls night, for the lantern. */
+  const NIGHT = (() => {
+    for (let h = 0; h < 48; h++) {
+      if (timeOfDay(T0 + h * HOUR) === "night") return T0 + h * HOUR;
+    }
+    throw new Error("the world clock never reaches night");
+  })();
+
+  const SAMPLE_FISH = {
+    id: "probe",
+    speciesId: "tilapia",
+    sizeCm: 24,
+    stars: 3,
+    mutation: null,
+    caughtAt: T0,
+    zoneId: "pond" as const,
+  };
+
+  /**
+   * One number per upgrade/skill that has to move when a level is bought.
+   * Anything added to the data files without a probe here fails the coverage
+   * test below, so a purchase can never quietly do nothing.
+   */
+  type Probe = { direction: "up" | "down"; measure: (state: GameState) => number };
+
+  const UPGRADE_PROBES: Record<UpgradeId, Probe> = {
+    rod: { direction: "up", measure: (s) => getModifiers(s).zoneWidth },
+    line: { direction: "up", measure: (s) => getModifiers(s).sizeMultiplier },
+    reel: { direction: "down", measure: (s) => getModifiers(s).sweepMultiplier },
+    creel: { direction: "up", measure: (s) => getModifiers(s).bagCapacity },
+    cooler: { direction: "up", measure: (s) => fishValue(s, SAMPLE_FISH, T0) },
+    lantern: { direction: "up", measure: (s) => contextLuck(s, "pond", NIGHT) },
+    boat: {
+      direction: "up",
+      measure: (s) => ALL_ZONES.filter((z) => zoneUnlockState(s, z.id).meetsBoat).length,
+    },
+    helper: { direction: "up", measure: (s) => 1 / getModifiers(s).activeAutoCatchIntervalMs },
+    rack: { direction: "up", measure: (s) => getModifiers(s).offlineCapMs },
+    charm: { direction: "up", measure: (s) => getModifiers(s).luck },
+    pond: { direction: "up", measure: (s) => getModifiers(s).pondSlots },
+  };
+
+  const SKILL_PROBES: Record<SkillId, Probe> = {
+    luck: { direction: "up", measure: (s) => getModifiers(s).luck },
+    patience: { direction: "up", measure: (s) => getModifiers(s).zoneWidth },
+    swift: { direction: "down", measure: (s) => getModifiers(s).castCooldownMs },
+    keeper: { direction: "up", measure: (s) => getModifiers(s).growthMultiplier },
+    merchant: { direction: "up", measure: (s) => fishValue(s, SAMPLE_FISH, T0) },
+    breeder: { direction: "up", measure: (s) => getModifiers(s).mutationChance },
+    dreamer: { direction: "up", measure: (s) => getModifiers(s).offlineCapMs },
+  };
+
+  function expectMoved(probe: Probe, before: number, after: number) {
+    if (probe.direction === "up") expect(after).toBeGreaterThan(before);
+    else expect(after).toBeLessThan(before);
+  }
+
+  it("has a probe for every upgrade and skill in the data files", () => {
+    expect(UPGRADES.map((u) => u.id).sort()).toEqual(Object.keys(UPGRADE_PROBES).sort());
+    expect(SKILLS.map((s) => s.id).sort()).toEqual(Object.keys(SKILL_PROBES).sort());
+  });
+
+  it.each(UPGRADES.map((u) => u.id))("upgrade %s changes the game when bought", (id) => {
+    const state = freshState();
+    state.coins = 10_000_000;
+    const probe = UPGRADE_PROBES[id];
+
+    const bought = applyCommand(state, { type: "buyUpgrade", id }, T0);
+    expect(bought.effects.ok).toBe(true);
+    expect(bought.state.coins).toBeLessThan(state.coins);
+    expectMoved(probe, probe.measure(state), probe.measure(bought.state));
+  });
+
+  it.each(SKILLS.map((s) => s.id))("skill %s changes the game when learned", (id) => {
+    const state = freshState();
+    state.skillPoints = 1;
+    const probe = SKILL_PROBES[id];
+
+    const learned = applyCommand(state, { type: "learnSkill", id }, T0);
+    expect(learned.effects.ok).toBe(true);
+    expect(learned.state.skillPoints).toBe(0);
+    expectMoved(probe, probe.measure(state), probe.measure(learned.state));
+  });
+
+  it.each(UPGRADES)("upgrade $id is still worth buying at max level", (upgrade) => {
+    const probe = UPGRADE_PROBES[upgrade.id];
+    const before = freshState();
+    before.upgrades[upgrade.id] = upgrade.maxLevel - 1;
+    const after = freshState();
+    after.upgrades[upgrade.id] = upgrade.maxLevel;
+
+    // Guards the Math.min/Math.max clamps in getModifiers: if a cap bites
+    // before the last level, players pay for a level that does nothing.
+    expectMoved(probe, probe.measure(before), probe.measure(after));
+  });
+
+  it.each(SKILLS)("skill $id is still worth a point at max level", (skill) => {
+    const probe = SKILL_PROBES[skill.id];
+    const before = freshState();
+    before.skills[skill.id] = skill.maxLevel - 1;
+    const after = freshState();
+    after.skills[skill.id] = skill.maxLevel;
+
+    expectMoved(probe, probe.measure(before), probe.measure(after));
+  });
+
+  it("refuses to buy past an upgrade's max level", () => {
+    const state = freshState();
+    state.coins = 10_000_000;
+    state.upgrades.rod = UPGRADE_BY_ID.rod.maxLevel;
+    const bought = applyCommand(state, { type: "buyUpgrade", id: "rod" }, T0);
+    expect(bought.effects.ok).toBe(false);
+    expect(bought.state.coins).toBe(state.coins);
+    expect(bought.state.upgrades.rod).toBe(UPGRADE_BY_ID.rod.maxLevel);
+  });
+
+  it("refuses to learn a skill without a point to spend", () => {
+    const state = freshState();
+    state.skillPoints = 0;
+    const learned = applyCommand(state, { type: "learnSkill", id: "luck" }, T0);
+    expect(learned.effects.ok).toBe(false);
+    expect(learned.state.skills.luck ?? 0).toBe(0);
   });
 });
 

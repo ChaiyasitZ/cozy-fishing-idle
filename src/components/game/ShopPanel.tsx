@@ -10,8 +10,8 @@ import {
   upgradeCost,
   ZONE_BY_ID,
 } from "@/game/data";
-import { dailyMerchant, itemPrice } from "@/game/engine";
-import type { Locale } from "@/game/types";
+import { dailyMerchant, getModifiers, itemPrice } from "@/game/engine";
+import type { GameState, Locale, SkillId, UpgradeId } from "@/game/types";
 import { Button, Panel } from "@/components/ui/primitives";
 import { formatNumber, pick, t } from "@/lib/i18n";
 import { useNow } from "@/lib/hooks";
@@ -185,6 +185,7 @@ export function ShopPanel({ locale }: { locale: Locale }) {
               const level = state.upgrades[upgrade.id] ?? 0;
               const maxed = level >= upgrade.maxLevel;
               const cost = upgradeCost(upgrade.id, level);
+              const total = level > 0 ? gearTotal(state, upgrade.id, locale) : null;
               return (
                 <div
                   key={upgrade.id}
@@ -201,7 +202,17 @@ export function ShopPanel({ locale }: { locale: Locale }) {
                         {level}/{upgrade.maxLevel}
                       </span>
                     </p>
-                    <p className="text-[11px] text-ink-soft">{pick(locale, upgrade.effect)}</p>
+                    <p className="text-[11px] text-ink-soft">
+                      {pick(locale, upgrade.effect)}
+                      {total && (
+                        <>
+                          {" · "}
+                          <b className="text-moss">
+                            {t(locale, "gear.now")} {total}
+                          </b>
+                        </>
+                      )}
+                    </p>
                   </div>
                   <Button
                     size="sm"
@@ -230,6 +241,7 @@ export function ShopPanel({ locale }: { locale: Locale }) {
             {SKILLS.map((skill) => {
               const level = state.skills[skill.id] ?? 0;
               const maxed = level >= skill.maxLevel;
+              const total = level > 0 ? gearTotal(state, skill.id, locale) : null;
               return (
                 <div
                   key={skill.id}
@@ -245,7 +257,17 @@ export function ShopPanel({ locale }: { locale: Locale }) {
                         {level}/{skill.maxLevel}
                       </span>
                     </p>
-                    <p className="text-[11px] text-ink-soft">{pick(locale, skill.blurb)}</p>
+                    <p className="text-[11px] text-ink-soft">
+                      {pick(locale, skill.blurb)}
+                      {total && (
+                        <>
+                          {" · "}
+                          <b className="text-moss">
+                            {t(locale, "gear.now")} {total}
+                          </b>
+                        </>
+                      )}
+                    </p>
                   </div>
                   <Button
                     size="sm"
@@ -263,4 +285,52 @@ export function ShopPanel({ locale }: { locale: Locale }) {
       )}
     </div>
   );
+}
+
+const pct = (value: number) => `${Math.round(value * 100)}%`;
+const secs = (ms: number) => `${(ms / 1000).toFixed(1)}s`;
+
+/**
+ * The running total a purchase has bought so far. The per-level blurb alone
+ * left players unsure whether a level did anything, so every row shows the
+ * number the upgrade actually controls right now.
+ */
+function gearTotal(state: GameState, id: UpgradeId | SkillId, locale: Locale): string | null {
+  const m = getModifiers(state);
+  switch (id) {
+    case "rod":
+    case "patience":
+      return `${t(locale, "gear.zone")} ${pct(m.zoneWidth)}`;
+    case "line":
+      return `${t(locale, "gear.size")} ×${m.sizeMultiplier.toFixed(2)}`;
+    case "reel":
+      return `${t(locale, "gear.barSpeed")} ${pct(1 - m.sweepMultiplier)}`;
+    case "creel":
+      return `${t(locale, "gear.bag")} ${m.bagCapacity}`;
+    case "cooler":
+    case "merchant":
+      return `${t(locale, "gear.sell")} ×${m.sellMultiplier.toFixed(2)}`;
+    case "lantern":
+      return `${t(locale, "gear.nightLuck")} +${pct((state.upgrades.lantern ?? 0) * 0.08)}`;
+    case "boat":
+      return `${t(locale, "gear.boat")}${state.upgrades.boat ?? 0}`;
+    case "helper":
+      return `${t(locale, "gear.autoEvery")} ${secs(m.activeAutoCatchIntervalMs)}`;
+    case "rack":
+    case "dreamer":
+      return `${t(locale, "gear.offline")} ${Math.round(m.offlineCapMs / 3600_000)}h`;
+    case "charm":
+    case "luck":
+      return `${t(locale, "fish.luck")} +${pct(m.luck)}`;
+    case "pond":
+      return `${t(locale, "pond.slots")} ${m.pondSlots}`;
+    case "swift":
+      return `${t(locale, "gear.castDelay")} ${secs(m.castCooldownMs)}`;
+    case "keeper":
+      return `${t(locale, "pond.growth")} ×${m.growthMultiplier.toFixed(2)}`;
+    case "breeder":
+      return `${t(locale, "gear.mutation")} ${(m.mutationChance * 100).toFixed(1)}%`;
+    default:
+      return null;
+  }
 }
