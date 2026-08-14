@@ -101,6 +101,8 @@ export const STRINGS = {
     th: "เลือกปลาโตเต็มวัยสายพันธุ์เดียวกัน 2 ตัว",
     en: "Pick two mature fish of the same species.",
   },
+  "pond.growth": { th: "เร่งการโต", en: "Growth" },
+  "pond.growthNone": { th: "ไม่ช่วยเร่งการโต", en: "No growth boost" },
   "pond.slots": { th: "ช่องบ่อ", en: "Slots" },
   "pond.toBag": { th: "เอาขึ้นกระเป๋า", en: "To bag" },
   "pond.sell": { th: "ขาย", en: "Sell" },

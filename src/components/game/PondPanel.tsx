@@ -78,16 +78,31 @@ export function PondPanel({ locale }: { locale: Locale }) {
               {locale === "th" ? "ไม่มีอาหารปลา — ซื้อได้ที่ร้านค้า" : "No food — buy some in the shop"}
             </span>
           ) : (
-            availableFood.map((food) => (
-              <Button
-                key={food.id}
-                size="sm"
-                tone="ghost"
-                onClick={() => void run({ type: "feedPond", foodId: food.id })}
-              >
-                {food.emoji} {t(locale, "pond.feed")} ×{state.items[food.id]}
-              </Button>
-            ))
+            availableFood.map((food) => {
+              // Plain pellets only clean the water, so the growth boost has to
+              // be visible here or feeding looks like it did nothing.
+              const boost = food.food?.growthMultiplier ?? 1;
+              return (
+                <Button
+                  key={food.id}
+                  size="sm"
+                  tone="ghost"
+                  title={`${t(locale, "pond.freshness")} +${Math.round(
+                    (food.food?.freshness ?? 0) * 100,
+                  )}% · ${
+                    boost > 1
+                      ? `${t(locale, "pond.growth")} ×${boost}`
+                      : t(locale, "pond.growthNone")
+                  }`}
+                  onClick={() => void run({ type: "feedPond", foodId: food.id })}
+                >
+                  {food.emoji} {t(locale, "pond.feed")} ×{state.items[food.id]}
+                  {boost > 1 && (
+                    <span className="ml-1 text-[10px] font-bold text-moss">⚡{boost}×</span>
+                  )}
+                </Button>
+              );
+            })
           )}
         </div>
 

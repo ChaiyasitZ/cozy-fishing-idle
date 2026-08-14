@@ -151,6 +151,25 @@ describe("casting", () => {
     expect(resolved.state.pendingCast).toBeNull();
   });
 
+  it("does not let an abandoned cast soft-lock the rod", () => {
+    const cast = applyCommand(freshState(), { type: "cast" }, T0);
+    expect(cast.state.pendingCast).not.toBeNull();
+
+    // The player never reeled in: tab closed on the bite. Coming back later,
+    // casting has to work again rather than failing on the leftover cast.
+    const later = T0 + 10 * MINUTE;
+    const again = applyCommand(cast.state, { type: "cast" }, later);
+    expect(again.effects.ok).toBe(true);
+    expect(again.state.pendingCast?.startedAt).toBe(later);
+  });
+
+  it("keeps a cast that is still within its timing window", () => {
+    const cast = applyCommand(freshState(), { type: "cast" }, T0);
+    const pending = cast.state.pendingCast!;
+    const settled = resolveIdle(cast.state, T0 + CAST_TIMEOUT_MS);
+    expect(settled.state.pendingCast?.id).toBe(pending.id);
+  });
+
   it("rejects a tap claimed from the future", () => {
     const cast = applyCommand(freshState(), { type: "cast" }, T0);
     const pending = cast.state.pendingCast!;
@@ -353,6 +372,25 @@ describe("pond", () => {
     expect(fed.effects.ok).toBe(true);
     expect(pendingHarvest(fed.state, stale + HOUR).coins).toBeGreaterThan(0);
     expect(before).toBeGreaterThanOrEqual(0);
+  });
+
+  it("only shortens growth for food that carries a growth bonus", () => {
+    const { state, now } = stateWithPondFish();
+    const before = state.pond.fish.map((f) => f.maturesAt);
+
+    const plainState = structuredClone(state);
+    plainState.items.food_basic = 1;
+    const plain = applyCommand(plainState, { type: "feedPond", foodId: "food_basic" }, now);
+    expect(plain.effects.ok).toBe(true);
+    expect(plain.state.pond.fish.map((f) => f.maturesAt)).toEqual(before);
+
+    const premiumState = structuredClone(state);
+    premiumState.items.food_premium = 1;
+    const premium = applyCommand(premiumState, { type: "feedPond", foodId: "food_premium" }, now);
+    expect(premium.effects.ok).toBe(true);
+    premium.state.pond.fish.forEach((fish, index) => {
+      expect(fish.maturesAt).toBeLessThan(before[index]);
+    });
   });
 });
 

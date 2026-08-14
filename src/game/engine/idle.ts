@@ -12,6 +12,12 @@ import { createRng } from "./rng";
 const MAX_OFFLINE_CATCHES = 240;
 
 /**
+ * Slack on top of a cast's own timeout before we call it abandoned. Wide enough
+ * that a slow round trip to the server is never mistaken for a closed tab.
+ */
+const ABANDONED_CAST_GRACE_MS = 30_000;
+
+/**
  * The single source of truth for "what happened while I was away". Called on
  * load and before every action, on the server when signed in. Deterministic:
  * the same state and timestamp always produce the same result.
@@ -35,6 +41,15 @@ export function resolveIdle(
     matured: 0,
     eggs: 0,
   };
+
+  // A cast that was never reeled in — tab closed on the bite, connection died —
+  // used to sit in the save forever, and startCast refuses to roll a new one
+  // while it is there. That soft-locked the rod, so drop it once it can no
+  // longer be resolved.
+  const stale = state.pendingCast;
+  if (stale && now - stale.startedAt > stale.timeoutMs + ABANDONED_CAST_GRACE_MS) {
+    state.pendingCast = null;
+  }
 
   if (elapsed < 1000) {
     state.lastTickAt = now;

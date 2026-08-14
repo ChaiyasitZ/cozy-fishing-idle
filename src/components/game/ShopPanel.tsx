@@ -154,8 +154,11 @@ export function ShopPanel({ locale }: { locale: Locale }) {
                     <p className="truncate text-[13px] font-bold">{pick(locale, food.name)}</p>
                     <p className="text-[11px] text-ink-soft">
                       {t(locale, "shop.owned")} {state.items[food.id] ?? 0} ·{" "}
-                      {locale === "th" ? "โตเร็ว" : "growth"} ×
-                      {food.food?.growthMultiplier.toFixed(2)}
+                      {t(locale, "pond.freshness")} +
+                      {Math.round((food.food?.freshness ?? 0) * 100)}% ·{" "}
+                      {(food.food?.growthMultiplier ?? 1) > 1
+                        ? `${t(locale, "pond.growth")} ×${food.food?.growthMultiplier}`
+                        : t(locale, "pond.growthNone")}
                     </p>
                   </div>
                   <span className="text-[12px] font-extrabold">
