@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import {
   ITEM_BY_ID,
   RARITY_COLOR,
   RARITY_LABEL,
   SPECIES_BY_ID,
-  SPECIES_BY_ZONE,
   ZONE_BY_ID,
 } from "@/game/data";
 import {
@@ -97,19 +96,6 @@ export function FishingScene({ locale }: { locale: Locale }) {
     setAutoFishing,
   ]);
 
-  // Two drifting shapes are enough to show the water is alive. More than that
-  // just crowded the surface and competed with the fish art for attention.
-  const shadows = useMemo(() => {
-    const pool = SPECIES_BY_ZONE[state.zoneId] ?? [];
-    return pool.slice(0, 2).map((species, index) => ({
-      emoji: species.emoji,
-      top: 16 + index * 20,
-      duration: 16 + index * 6,
-      delay: index * -7,
-      scale: 0.8 + index * 0.25,
-    }));
-  }, [state.zoneId]);
-
   const isNight = tod === "night";
   const bobberX = phase === "idle" ? 26 : 62;
 
@@ -133,28 +119,9 @@ export function FishingScene({ locale }: { locale: Locale }) {
           }}
         >
           <Waves />
-          {shadows.map((shadow, index) => (
-            <span
-              key={index}
-              className="animate-swim absolute text-2xl"
-              style={{
-                top: `${shadow.top}%`,
-                animationDuration: `${shadow.duration}s`,
-                animationDelay: `${shadow.delay}s`,
-                transform: `scale(${shadow.scale})`,
-                // Flatten the emoji into a dark blob so it reads as something
-                // moving under the surface, not a second style of fish art.
-                filter: "blur(2px) brightness(0)",
-                opacity: 0.18,
-              }}
-              aria-hidden
-            >
-              {shadow.emoji}
-            </span>
-          ))}
         </div>
 
-        {/* angler + bobber */}
+        {/* bobber */}
         <div className="absolute bottom-[38%] left-0 right-0 h-16">
           <span
             className="absolute bottom-0 text-4xl transition-all duration-500 ease-out"
@@ -166,9 +133,6 @@ export function FishingScene({ locale }: { locale: Locale }) {
             </span>
           </span>
         </div>
-        <span className="absolute bottom-[30%] left-4 text-5xl sm:text-6xl" aria-hidden>
-          🧑‍🌾
-        </span>
 
         {/* zone + weather chips */}
         <div className="absolute inset-x-0 top-0 flex flex-wrap items-center gap-1.5 p-2.5">

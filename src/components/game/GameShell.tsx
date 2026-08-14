@@ -53,6 +53,7 @@ export function GameShell({
   const saveLocked = useGame((s) => s.saveLocked);
   const setSaveLocked = useGame((s) => s.setSaveLocked);
   const bootstrapped = useRef(false);
+  const fishColumnRef = useRef<HTMLDivElement>(null);
 
   // Boot: cloud state comes from the server, guest state from localStorage.
   useEffect(() => {
@@ -157,6 +158,18 @@ export function GameShell({
     };
   }, []);
 
+  // Below `lg` the fishing column is hidden with display:none instead of being
+  // unmounted, and that on its own does not replay a CSS animation. Restart it
+  // by hand so coming back to the fish tab enters like every other tab does.
+  useEffect(() => {
+    if (tab !== "fish") return;
+    if (window.matchMedia("(min-width: 64rem)").matches) return;
+    for (const animation of fishColumnRef.current?.getAnimations() ?? []) {
+      animation.cancel();
+      animation.play();
+    }
+  }, [tab]);
+
   const panel = (() => {
     switch (tab) {
       case "pond":
@@ -183,12 +196,24 @@ export function GameShell({
         <div className="lg:grid lg:grid-cols-[9.5rem_minmax(0,1fr)_minmax(0,25rem)] lg:gap-4">
           <NavRail locale={locale} />
 
-          <div className={tab === "fish" ? "flex flex-col gap-3" : "hidden flex-col gap-3 lg:flex"}>
+          {/*
+            Animates once on load only. It must not be keyed on the tab: the
+            scene stays mounted while you browse other tabs so the deck cat
+            keeps fishing, and remounting would restart that timer every switch.
+          */}
+          <div
+            ref={fishColumnRef}
+            className={`animate-panel-in flex-col gap-3 ${tab === "fish" ? "flex" : "hidden lg:flex"}`}
+          >
             <FishingScene locale={locale} />
             <ZoneStrip locale={locale} />
           </div>
 
-          <div className={tab === "fish" ? "mt-3 flex flex-col gap-3 lg:mt-0" : "flex flex-col gap-3"}>
+          {/* Keyed on the tab so every switch remounts and replays the entrance. */}
+          <div
+            key={tab}
+            className={`animate-panel-in flex flex-col gap-3 ${tab === "fish" ? "mt-3 lg:mt-0" : ""}`}
+          >
             {panel}
           </div>
         </div>

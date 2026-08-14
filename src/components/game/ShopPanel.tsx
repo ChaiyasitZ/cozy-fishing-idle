@@ -27,6 +27,8 @@ export function ShopPanel({ locale }: { locale: Locale }) {
 
   const merchant = dailyMerchant(now);
   const discountItem = ITEM_BY_ID[merchant.discountBaitId];
+  const discountBase = discountItem.buy;
+  const discountPrice = itemPrice(merchant.discountBaitId, now) ?? 0;
   const bonusZone = ZONE_BY_ID[merchant.bonusZoneId];
   const materialValue = Object.entries(state.items).reduce((sum, [id, qty]) => {
     const item = ITEM_BY_ID[id];
@@ -47,6 +49,13 @@ export function ShopPanel({ locale }: { locale: Locale }) {
           <span className="font-bold text-coral">{t(locale, "shop.merchantDeal")}:</span>{" "}
           {discountItem.emoji} {pick(locale, discountItem.name)} −
           {Math.round(merchant.discount * 100)}%
+          {discountBase !== null && (
+            <>
+              {" · "}
+              <s className="text-ink-soft">{formatNumber(discountBase, locale)}</s>{" "}
+              <b className="text-coral">{formatNumber(discountPrice, locale)}🪙</b>
+            </>
+          )}
         </p>
         <p className="text-[12px]">
           <span className="font-bold text-moss">{t(locale, "shop.merchantBonus")}:</span>{" "}
@@ -108,10 +117,15 @@ export function ShopPanel({ locale }: { locale: Locale }) {
                       {Math.round((bait.bait?.sizeBonus ?? 0) * 100)}%
                     </p>
                   </div>
-                  <span
-                    className={`text-[12px] font-extrabold ${discounted ? "text-coral" : ""}`}
-                  >
-                    {formatNumber(price, locale)}🪙
+                  <span className="text-[12px] font-extrabold">
+                    {discounted && (
+                      <s className="mr-1 font-bold text-ink-soft">
+                        {formatNumber(bait.buy ?? 0, locale)}
+                      </s>
+                    )}
+                    <span className={discounted ? "text-coral" : ""}>
+                      {formatNumber(price, locale)}🪙
+                    </span>
                   </span>
                   <div className="flex gap-1">
                     <Button
