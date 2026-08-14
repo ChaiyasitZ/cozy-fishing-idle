@@ -12,6 +12,7 @@ import {
 import { isQuestComplete } from "@/game/engine";
 import type { Locale, QuestState, ZoneId } from "@/game/types";
 import { Bar, Button, Panel } from "@/components/ui/primitives";
+import { SpeciesCardPortrait } from "./FishCard";
 import { formatNumber, pick, t } from "@/lib/i18n";
 import { useGame } from "@/store/gameStore";
 
@@ -65,38 +66,40 @@ export function DexPanel({ locale }: { locale: Locale }) {
                   <p className="mb-1.5 text-[12px] font-bold">
                     {zone.emoji} {pick(locale, zone.name)}
                   </p>
-                  <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                     {list.map((species) => {
                       const entry = state.fishdex[species.id];
                       return (
                         <div
                           key={species.id}
-                          className={`rounded-xl border px-2 py-1.5 ${
+                          className={`overflow-hidden rounded-2xl border ${
                             entry
                               ? "border-card-edge bg-card"
                               : "border-dashed border-card-edge bg-paper-2/40"
                           }`}
                         >
-                          <p className="flex items-center gap-1 text-[12px] font-bold">
-                            <span aria-hidden>{entry ? species.emoji : "❔"}</span>
-                            <span className="truncate">
+                          <SpeciesCardPortrait
+                            speciesId={species.id}
+                            locked={!entry}
+                          />
+                          <div className="space-y-0.5 px-2.5 py-2">
+                            <p className="truncate text-[12px] font-bold">
                               {entry ? pick(locale, species.name) : "???"}
-                            </span>
-                          </p>
-                          {entry ? (
-                            <p className="text-[10px] text-ink-soft">
-                              {t(locale, "dex.caught")} {entry.count} ·{" "}
-                              {t(locale, "dex.biggest")} {entry.maxSize}
-                              {t(locale, "common.cm")}
                             </p>
-                          ) : (
+                            {entry && (
+                              <p className="text-[10px] text-ink-soft">
+                                {t(locale, "dex.caught")} {entry.count} ·{" "}
+                                {t(locale, "dex.biggest")} {entry.maxSize}
+                                {t(locale, "common.cm")}
+                              </p>
+                            )}
                             <p
-                              className="text-[10px]"
+                              className="text-[10px] font-semibold"
                               style={{ color: RARITY_COLOR[species.rarity] }}
                             >
                               {pick(locale, RARITY_LABEL[species.rarity])}
                             </p>
-                          )}
+                          </div>
                         </div>
                       );
                     })}

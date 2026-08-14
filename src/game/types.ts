@@ -16,6 +16,8 @@ export interface Species {
   id: string;
   name: Localized;
   emoji: string;
+  /** Optional PNG under /public, used instead of the emoji when present. */
+  image?: string;
   zone: ZoneId;
   rarity: Rarity;
   /** Coin value of a median-size, 1-star specimen before any multipliers. */

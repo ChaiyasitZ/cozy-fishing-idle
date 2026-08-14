@@ -13,36 +13,172 @@ export function Stars({ count }: { count: number }) {
   );
 }
 
+function PortraitFrame({
+  size,
+  mutationRing,
+  children,
+  rounded = "full",
+  /** Landscape frame matching cropped fish icons (~3:2). */
+  wide = false,
+}: {
+  size: number;
+  mutationRing?: string;
+  children: React.ReactNode;
+  rounded?: "full" | "xl";
+  wide?: boolean;
+}) {
+  return (
+    <span
+      className={`relative inline-flex shrink-0 items-center justify-center overflow-hidden ${
+        rounded === "xl" ? "rounded-xl" : "rounded-full"
+      }`}
+      style={{
+        width: wide ? Math.round(size * 1.45) : size,
+        height: size,
+        background:
+          "linear-gradient(160deg, color-mix(in srgb, var(--water-light), white 55%), var(--foam))",
+        boxShadow: mutationRing
+          ? `0 0 0 2px ${mutationRing}, inset 0 -6px 12px rgba(29,139,156,0.12)`
+          : "inset 0 -6px 12px rgba(29,139,156,0.1)",
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
 export function FishAvatar({
   fish,
-  size = 34,
+  size = 44,
 }: {
   fish: FishInstance;
   size?: number;
 }) {
   const species = SPECIES_BY_ID[fish.speciesId];
   const mutation = fish.mutation ? MUTATION_INFO[fish.mutation] : null;
+  const hasImage = Boolean(species?.image);
+
   return (
-    <span
-      className="relative inline-flex shrink-0 items-center justify-center rounded-full"
-      style={{
-        width: size,
-        height: size,
-        background: "var(--foam)",
-        boxShadow: mutation ? `0 0 0 2px ${mutation.ring}` : undefined,
-      }}
+    <PortraitFrame
+      size={size}
+      mutationRing={mutation?.ring}
+      rounded={hasImage ? "xl" : "full"}
+      wide={hasImage}
     >
-      <span style={{ fontSize: size * 0.56 }} aria-hidden>
-        {species?.emoji ?? "🐟"}
-      </span>
+      {hasImage ? (
+        // eslint-disable-next-line @next/next/no-img-element -- small static public assets
+        <img
+          src={species!.image}
+          alt=""
+          width={Math.round(size * 1.45)}
+          height={size}
+          className="h-full w-full object-cover"
+          draggable={false}
+        />
+      ) : (
+        <span style={{ fontSize: size * 0.52 }} aria-hidden>
+          {species?.emoji ?? "🐟"}
+        </span>
+      )}
       {mutation && (
         <span
-          className="animate-sheen absolute inset-0 rounded-full"
-          style={{ background: `radial-gradient(circle at 30% 25%, ${mutation.ring}, transparent 65%)` }}
+          className="animate-sheen pointer-events-none absolute inset-0"
+          style={{
+            background: `radial-gradient(circle at 30% 25%, ${mutation.ring}, transparent 65%)`,
+            borderRadius: "inherit",
+          }}
           aria-hidden
         />
       )}
-    </span>
+    </PortraitFrame>
+  );
+}
+
+/** Species portrait for Fishdex / lists that only have a species id. */
+export function SpeciesAvatar({
+  speciesId,
+  size = 44,
+  locked = false,
+}: {
+  speciesId: string;
+  size?: number;
+  locked?: boolean;
+}) {
+  const species = SPECIES_BY_ID[speciesId];
+  if (locked || !species) {
+    return (
+      <PortraitFrame size={size} rounded="xl" wide>
+        <span style={{ fontSize: size * 0.4 }} aria-hidden>
+          ❔
+        </span>
+      </PortraitFrame>
+    );
+  }
+  if (species.image) {
+    return (
+      <PortraitFrame size={size} rounded="xl" wide>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={species.image}
+          alt=""
+          width={Math.round(size * 1.45)}
+          height={size}
+          className="h-full w-full object-cover"
+          draggable={false}
+        />
+      </PortraitFrame>
+    );
+  }
+  return (
+    <PortraitFrame size={size} rounded="full">
+      <span style={{ fontSize: size * 0.52 }} aria-hidden>
+        {species.emoji}
+      </span>
+    </PortraitFrame>
+  );
+}
+
+/** Full-bleed Fishdex card portrait — cropped fish art fills the box. */
+export function SpeciesCardPortrait({
+  speciesId,
+  locked = false,
+}: {
+  speciesId: string;
+  locked?: boolean;
+}) {
+  const species = SPECIES_BY_ID[speciesId];
+  return (
+    <div
+      className="relative aspect-[3/2] w-full overflow-hidden"
+      style={{
+        background:
+          "linear-gradient(180deg, color-mix(in srgb, var(--water-light), white 28%), color-mix(in srgb, var(--water), black 22%))",
+      }}
+    >
+      {locked || !species ? (
+        <span
+          className="absolute inset-0 flex items-center justify-center text-2xl opacity-70"
+          aria-hidden
+        >
+          ❔
+        </span>
+      ) : species.image ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={species.image}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+          draggable={false}
+        />
+      ) : (
+        <span
+          className="absolute inset-0 flex items-center justify-center text-3xl"
+          aria-hidden
+        >
+          {species.emoji}
+        </span>
+      )}
+    </div>
   );
 }
 
